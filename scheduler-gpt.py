@@ -1,6 +1,6 @@
 #ChatGPT-Scheduler
 #Spring 2025
-# Group 41: Jack Livingston, Daniel Small, Carlos Martinez-Celedon, Michael Rivera
+# Group 41: Jack Livingston, Daniel Small, Carlos Martinez-Celedon, Michael Rivera, and Rayyan Vorajee
 
 import sys
 from collections import deque
