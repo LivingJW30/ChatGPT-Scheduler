@@ -9,3 +9,5 @@ Assignment #1 ChatGPT Scheduler for Operating Systems
 - Michael Rivera: https://chatgpt.com/share/67aa3b83-a4f4-8002-a40d-9db750af979d
 - Carlos Martinez-Celedon: https://chatgpt.com/share/67ae497b-adc0-8005-b122-dc6593ce994e / https://chatgpt.com/share/67b79bb3-4200-8005-9532-46f93e7d6cf1 (FCFS fix)
 - Daniel T. Small: https://shareclaude.pages.dev/c/g4551cf74n66aqfbs3m21obb
+- Rayyan Vorajee: https://chatgpt.com/share/67b7a1d7-9174-8003-af44-177de9ae3eaa (Updated)
+  
