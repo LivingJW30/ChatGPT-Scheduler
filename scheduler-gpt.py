@@ -24,30 +24,44 @@ def fcfs(processes, runfor):
     output.append(f"{len(processes)} processes")
     output.append("Using First-Come First-Served")
     
-    for process in queue:
-        while time < process.arrival:
-            output.append(f"Time {time} : Idle")
-            time += 1
-        
-        output.append(f"Time {time} : {process.name} arrived")
-        output.append(f"Time {time} : {process.name} selected (burst {process.burst})")
-        process.start_time = time
-        process.wait_time = time - process.arrival
-        time += process.burst
-        process.completion_time = time
-        process.turnaround_time = process.completion_time - process.arrival
-        process.response_time = process.wait_time
-        output.append(f"Time {time} : {process.name} finished")
+    index = 0  # Track which process arrives next
+    ready_queue = []
+    current_process = None
     
     while time < runfor:
-        output.append(f"Time {time} : Idle")
+        # Announce arrivals at the correct time
+        while index < len(queue) and queue[index].arrival == time:
+            output.append(f"Time {time} : {queue[index].name} arrived")
+            ready_queue.append(queue[index])
+            index += 1
+        
+        if current_process is None and ready_queue:
+            current_process = ready_queue.pop(0)
+            output.append(f"Time {time} : {current_process.name} selected (burst {current_process.burst})")
+            current_process.start_time = time
+            current_process.wait_time = time - current_process.arrival
+            current_process.response_time = current_process.wait_time
+            current_process.remaining_burst = current_process.burst
+        
+        if current_process:
+            current_process.remaining_burst -= 1
+            if current_process.remaining_burst == 0:
+                current_process.completion_time = time + 1
+                current_process.turnaround_time = current_process.completion_time - current_process.arrival
+                output.append(f"Time {time + 1} : {current_process.name} finished")
+                current_process = None
+        else:
+            output.append(f"Time {time} : Idle")
+        
         time += 1
+    
     output.append(f"Finished at time {runfor}")
     
     for process in sorted(queue, key=lambda p: p.name):
         output.append(f"{process.name} wait {process.wait_time} turnaround {process.turnaround_time} response {process.response_time}")
     
     return output
+
 
 def rr(processes, runfor, quantum):
     time = 0
