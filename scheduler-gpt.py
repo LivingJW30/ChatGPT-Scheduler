@@ -62,7 +62,6 @@ def fcfs(processes, runfor):
     
     return output
 
-
 def rr(processes, runfor, quantum):
     time = 0
     queue = deque()
@@ -71,43 +70,66 @@ def rr(processes, runfor, quantum):
     output.append(f"{len(processes)} processes")
     output.append("Using Round-Robin")
     output.append(f"Quantum {quantum}")
-    
+
     index = 0
+    remaining_burst = {p.name: p.burst for p in processes}
+    completion_time = {}
+    first_execution = {}
+    last_execution_time = {}
+    total_wait_time = {p.name: 0 for p in processes}  # Corrected wait time tracking
+
     while time < runfor:
-        while index < len(processes) and processes[index].arrival == time:
+        # Add new arrivals to the queue
+        while index < len(processes) and processes[index].arrival <= time:
             queue.append(processes[index])
-            output.append(f"Time {time} : {processes[index].name} arrived")
+            output.append(f"Time {processes[index].arrival:3} : {processes[index].name} arrived")
             index += 1
         
         if queue:
             process = queue.popleft()
-            if process.response_time == -1:
-                process.response_time = time - process.arrival
-            output.append(f"Time {time} : {process.name} selected (burst {process.remaining_burst})")
-            execute_time = min(quantum, process.remaining_burst)
-            process.remaining_burst -= execute_time
+
+            if process.name not in first_execution:
+                first_execution[process.name] = time  # Set response time only for first execution
+
+            output.append(f"Time {time:3} : {process.name} selected (burst {remaining_burst[process.name]})")
+
+            execute_time = min(quantum, remaining_burst[process.name])
+            remaining_burst[process.name] -= execute_time
+
+            # Wait time = total time spent waiting in the queue before execution
+            if process.name in last_execution_time:
+                total_wait_time[process.name] += (time - last_execution_time[process.name])
+
             time += execute_time
-            
-            while index < len(processes) and processes[index].arrival < time:
+            last_execution_time[process.name] = time  # Update last execution time
+
+            # Check for new arrivals while process was running
+            while index < len(processes) and processes[index].arrival <= time:
                 queue.append(processes[index])
-                output.append(f"Time {processes[index].arrival} : {processes[index].name} arrived")
+                output.append(f"Time {processes[index].arrival:3} : {processes[index].name} arrived")
                 index += 1
-            
-            if process.remaining_burst > 0:
-                queue.append(process)
+
+            if remaining_burst[process.name] > 0:
+                queue.append(process)  # Process still has remaining burst time
             else:
-                process.completion_time = time
-                process.turnaround_time = process.completion_time - process.arrival
-                process.wait_time = process.turnaround_time - process.burst
-                output.append(f"Time {time} : {process.name} finished")
+                completion_time[process.name] = time  # Process finished
+                output.append(f"Time {time:3} : {process.name} finished")
         else:
-            output.append(f"Time {time} : Idle")
+            output.append(f"Time {time:3} : Idle")
             time += 1
-    
+
     output.append(f"Finished at time {runfor}")
+
+    # Compute turnaround, wait, and response times
+    results = []
     for process in sorted(processes, key=lambda p: p.name):
-        output.append(f"{process.name} wait {process.wait_time} turnaround {process.turnaround_time} response {process.response_time}")
-    
+        turnaround = completion_time[process.name] - process.arrival
+        response = first_execution[process.name] - process.arrival
+        wait = turnaround - process.burst  # Corrected wait time
+
+        results.append(f"{process.name} wait {wait:3} turnaround {turnaround:3} response {response:3}")
+
+    output.extend(results)
     return output
 
 def sjf(processes, runfor):
