@@ -140,45 +140,47 @@ def sjf(processes, runfor):
     output.append("Using preemptive Shortest Job First")
     processes.sort(key=lambda p: (p.arrival, p.burst))
     index = 0
+    current_process = None
     
     while time < runfor:
+        # Announce arrivals at the correct time
         while index < len(processes) and processes[index].arrival == time:
             queue.append(processes[index])
             queue.sort(key=lambda p: p.remaining_burst)
             output.append(f"Time {time} : {processes[index].name} arrived")
             index += 1
         
-        if queue:
-            process = queue.pop(0)
-            if process.response_time == -1:
-                process.response_time = time - process.arrival
-            output.append(f"Time {time} : {process.name} selected (burst {process.remaining_burst})")
-            process.remaining_burst -= 1
-            time += 1
-            
-            while index < len(processes) and processes[index].arrival == time:
-                queue.append(processes[index])
+        # Select the process with the shortest remaining burst
+        if queue and (current_process is None or current_process.remaining_burst > queue[0].remaining_burst):
+            if current_process and current_process.remaining_burst > 0:
+                queue.append(current_process)
                 queue.sort(key=lambda p: p.remaining_burst)
-                output.append(f"Time {time} : {processes[index].name} arrived")
-                index += 1
-            
-            if process.remaining_burst > 0:
-                queue.append(process)
-                queue.sort(key=lambda p: p.remaining_burst)
-            else:
-                process.completion_time = time
-                process.turnaround_time = process.completion_time - process.arrival
-                process.wait_time = process.turnaround_time - process.burst
-                output.append(f"Time {time} : {process.name} finished")
+            current_process = queue.pop(0)
+            output.append(f"Time {time} : {current_process.name} selected (burst {current_process.remaining_burst})")
+            if current_process.response_time == -1:
+                current_process.response_time = time - current_process.arrival
+        
+        if current_process:
+            # Process execution
+            current_process.remaining_burst -= 1
+            if current_process.remaining_burst == 0:
+                current_process.completion_time = time + 1
+                current_process.turnaround_time = current_process.completion_time - current_process.arrival
+                current_process.wait_time = current_process.turnaround_time - current_process.burst
+                output.append(f"Time {time + 1} : {current_process.name} finished")
+                current_process = None  # Process completed
         else:
             output.append(f"Time {time} : Idle")
-            time += 1
+        
+        time += 1
     
     output.append(f"Finished at time {runfor}")
+    
     for process in sorted(processes, key=lambda p: p.name):
         output.append(f"{process.name} wait {process.wait_time} turnaround {process.turnaround_time} response {process.response_time}")
     
     return output
+
 
 def main():
     if len(sys.argv) != 2:
